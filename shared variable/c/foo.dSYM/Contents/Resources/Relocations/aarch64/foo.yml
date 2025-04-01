@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/truls_saether/Downloads/Exercise 1(1)/shared variable/c/foo'
+relocations:     []
+...
