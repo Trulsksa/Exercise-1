@@ -5,23 +5,43 @@
 #include <stdio.h>
 
 int i = 0;
+// --------- the change ---------- // 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex for synchronizing access to i
+// --------- the change ---------- // 
 
 // Note the return type: void*
 void* incrementingThreadFunction(){
+    // --------- the change ---------- // 
+    pthread_mutex_lock(&mutex);
+    // --------- the change ---------- // 
+
     // TODO: increment i 1_000_000 times
     for (int j = 0; j < 1000000; j++)
     {
         i++;
     }
+
+    // --------- the change ---------- // 
+    pthread_mutex_unlock(&mutex);
+    // --------- the change ---------- // 
     
     return NULL;
 }
 
 void* decrementingThreadFunction(){
+    // --------- the change ---------- // 
+    pthread_mutex_lock(&mutex);
+    // --------- the change ---------- // 
+
     // TODO: decrement i 1_000_000 times
-    for (int k = 0; k < 1000000; k++) {
+    for (int j = 0; j < 1000000; j++) {
         i--;
     }
+
+    // --------- the change ---------- // 
+    pthread_mutex_unlock(&mutex);
+    // --------- the change ---------- // 
+
     return NULL;
 }
 

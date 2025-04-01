@@ -1,38 +1,58 @@
-// Use `go run foo.go` to run your program
-
 package main
 
 import (
-	. "fmt"
-	"runtime"
-	"time"
+	"fmt"
 )
 
-var i = 0
+func Server(incChan, decChan chan struct{}, getChan chan chan int) {
+	i := 0
+	for {
+		select {
+		case <-incChan:
+			i++
 
-func incrementing() {
-	//TODO: increment i 1000000 times
-	for j := 0; j < 1000000; j++ {
-		i++
-	}
-}
+		case <-decChan:
+			i--
 
-func decrementing() {
-	//TODO: decrement i 1000000 times
-	for j := 0; j < 1000000; j++ {
-		i--
+		case response := <-getChan:
+			response <- i
+			return
+		}
 	}
 }
 
 func main() {
-	// What does GOMAXPROCS do? What happens if you set it to 1?
-	runtime.GOMAXPROCS(2)
+	// Channels for the operations.
+	incChan := make(chan struct{})
+	decChan := make(chan struct{})
+	getChan := make(chan chan int)
 
-	go incrementing()
-	go decrementing()
+	doneChan := make(chan struct{}, 2)
 
-	// We have no direct way to wait for the completion of a goroutine (without additional synchronization of some sort)
-	// We will do it properly with channels soon. For now: Sleep.
-	time.Sleep(500 * time.Millisecond)
-	Println("The magic number is:", i)
+	go Server(incChan, decChan, getChan)
+
+	go func() {
+		for j := 0; j < 1000000; j++ {
+			incChan <- struct{}{}
+		}
+		doneChan <- struct{}{}
+	}()
+
+	go func() {
+		for j := 0; j < 1000000; j++ {
+			decChan <- struct{}{}
+		}
+		doneChan <- struct{}{}
+	}()
+
+	// Wait for both to finish sending their requests.
+	<-doneChan
+	<-doneChan
+
+	// Request the final value.
+	respChan := make(chan int)
+	getChan <- respChan
+	finalValue := <-respChan
+
+	fmt.Println("The magic number is:", finalValue)
 }
